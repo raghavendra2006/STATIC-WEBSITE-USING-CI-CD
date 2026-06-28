@@ -8,7 +8,8 @@ build/
 # Testing
 /tests/e2e/.playwright
 /tests/e2e/playwright-report
-/tests/e2e/test-results
+test-results/
+playwright-report/
 
 # IDEs and editors
 .idea/
