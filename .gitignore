@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+build/
+
+# Testing
+/tests/e2e/.playwright
+/tests/e2e/playwright-report
+/tests/e2e/test-results
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Terraform local state and modules
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Local Environment/Secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+*.log

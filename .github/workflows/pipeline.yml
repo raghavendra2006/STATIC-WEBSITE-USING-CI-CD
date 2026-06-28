@@ -1,0 +1,128 @@
+name: Static Website CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read # Required to checkout code
+
+jobs:
+  build-and-lint-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for SonarCloud history analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Linters
+        run: npm run lint
+
+      - name: Build Site
+        run: npm run build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Security Scan (npm audit)
+        run: npm audit --audit-level=high
+
+      - name: Security Scan (Trivy FS Scan)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'dist/'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1' # Fails the pipeline if vulnerabilities are found
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-lint-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Run Staging Deployment
+        env:
+          STAGING_BUCKET_NAME: ${{ secrets.STAGING_BUCKET_NAME }}
+          STAGING_DISTRIBUTION_ID: ${{ secrets.STAGING_DISTRIBUTION_ID }}
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+        run: |
+          chmod +x ./scripts/*.sh
+          ./scripts/deploy-staging.sh
+
+  deploy-production:
+    name: Deploy to Production (Blue-Green)
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production # Triggers the manual approval gate in GitHub
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Run Production Blue-Green Deployment
+        env:
+          PROD_DISTRIBUTION_ID: ${{ secrets.PROD_DISTRIBUTION_ID }}
+          BLUE_BUCKET_NAME: ${{ secrets.BLUE_BUCKET_NAME }}
+          GREEN_BUCKET_NAME: ${{ secrets.GREEN_BUCKET_NAME }}
+          BLUE_BUCKET_ENDPOINT: ${{ secrets.BLUE_BUCKET_ENDPOINT }}
+          GREEN_BUCKET_ENDPOINT: ${{ secrets.GREEN_BUCKET_ENDPOINT }}
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+          SSM_PARAMETER_NAME: ${{ secrets.SSM_PARAMETER_NAME }}
+        run: |
+          chmod +x ./scripts/*.sh
+          ./scripts/deploy-blue-green.sh

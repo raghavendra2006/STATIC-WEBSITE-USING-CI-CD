@@ -1,0 +1,28 @@
+{
+  "name": "static-site-cicd",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Static Website with CI/CD Pipeline, blue-green deployment, and infrastructure-as-code",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint:html": "htmlhint \"src/**/*.html\"",
+    "lint:css": "stylelint \"src/**/*.css\"",
+    "lint:js": "eslint \"src/**/*.js\"",
+    "lint": "npm run lint:html && npm run lint:css && npm run lint:js",
+    "test:e2e": "playwright test",
+    "serve:dist": "http-server dist -p 8080"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.6.0",
+    "@playwright/test": "^1.45.0",
+    "eslint": "^9.6.0",
+    "globals": "^15.8.0",
+    "htmlhint": "^1.0.10",
+    "http-server": "^14.1.1",
+    "stylelint": "^16.6.1",
+    "stylelint-config-standard": "^36.0.1",
+    "vite": "^5.3.3"
+  }
+}

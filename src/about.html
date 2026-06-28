@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Technical details and architecture blueprint of the static site CI/CD deployment pipeline.">
+  <title>Infrastructure Architecture Blueprint</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <header>
+    <a href="./index.html" class="logo" id="logoLink">CI/CD WebOps</a>
+    <nav aria-label="Main Navigation">
+      <a href="./index.html" id="navHome">Dashboard</a>
+      <a href="./about.html" id="navAbout">Architecture</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light theme">
+        <span id="themeIcon">☀️</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="heroSection">
+      <span class="badge" id="archBadge">AWS Cloud Architecture</span>
+      <h1>System Blueprint</h1>
+      <p>A closer look at the secure, resilient, and fully automated deployment infrastructure that runs this static application.</p>
+    </section>
+
+    <section class="grid" id="aboutGrid" aria-label="Architecture Components">
+      <div class="card" id="cardStaging">
+        <h3>Staging Environment</h3>
+        <p>A completely separate staging environment deployed automatically upon successful linting and testing of new commits. Configured using AWS S3 for hosting and fronted by a dedicated CloudFront distribution for caching and HTTPS enforcement. Perfect for pre-production quality check validations.</p>
+      </div>
+
+      <div class="card secondary" id="cardBlueGreen">
+        <h3>Blue-Green Routing</h3>
+        <p>Two production S3 buckets (representing "Blue" and "Green" environments) are provisioned. A single production CloudFront distribution fronts these environments. The active environment is tracked in an AWS Systems Manager (SSM) Parameter. The deploy script switches the active origin without rebuilding, enabling instant promotions and rollbacks.</p>
+      </div>
+
+      <div class="card accent" id="cardOidc">
+        <h3>IAM Least-Privilege & OIDC</h3>
+        <p>Security is maintained by avoiding long-lived credentials in GitHub. Instead, GitHub Actions establishes a secure trust relationship with AWS using OpenID Connect (OIDC) to temporarily assume an IAM role. The role is strictly scoped to deploy artifacts and update CloudFront invalidations.</p>
+      </div>
+    </section>
+
+    <div style="margin-top: 3rem; text-align: center;">
+      <a href="./index.html" style="display: inline-block; padding: 0.8rem 2rem; background-color: var(--primary-color); color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 4px 14px var(--primary-glow);" id="backToDashboardBtn">
+        Back to Dashboard
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 CI/CD WebOps. Fully automated via AWS and GitHub Actions.</p>
+  </footer>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
